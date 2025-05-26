@@ -32,9 +32,8 @@ try:
     tab_button.click()
     time.sleep(3)
 
-    # Step 2: Click the "Load Data" button
-    load_button = wait.until(EC.element_to_be_clickable((By.XPATH, "//button[text()='Load Data']")))
-    load_button.click()
+    # Step 2: Wait for content to appear (skip the broken "Load Data" button)
+    wait.until(EC.presence_of_element_located((By.ID, "tab-content")))
     time.sleep(5)
 
     # Step 3: Extract rainfall data
