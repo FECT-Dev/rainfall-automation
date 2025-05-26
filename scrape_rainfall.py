@@ -1,0 +1,67 @@
+from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.chrome.options import Options
+from webdriver_manager.chrome import ChromeDriverManager
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+import time
+import csv
+
+options = Options()
+options.add_argument("--headless")
+options.add_argument("--no-sandbox")
+options.add_argument("--disable-dev-shm-usage")
+
+driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
+
+try:
+    driver.get("https://meteo.gov.lk/")
+    wait = WebDriverWait(driver, 15)
+
+    # Step 1: Click the "3 Hourly Data" tab
+    tab_button = wait.until(EC.element_to_be_clickable((By.XPATH, "//button[text()='3 Hourly Data']")))
+    tab_button.click()
+    time.sleep(3)
+
+    # Step 2: Click the "Load Data" button
+    load_button = wait.until(EC.element_to_be_clickable((By.XPATH, "//button[text()='Load Data']")))
+    load_button.click()
+    time.sleep(5)  # wait for data to load
+
+    # Step 3: Extract rainfall data
+    rainfall_section = driver.find_element(By.ID, "tab-content")
+    data = rainfall_section.text
+
+    # Save plain text (optional)
+    with open("rainfall_3hour.txt", "w", encoding="utf-8") as file:
+        file.write(data)
+
+    # Step 4: Convert text to CSV
+    lines = data.splitlines()
+    records = []
+
+    # Skip header rows (usually first 1 or 2 lines)
+    for line in lines:
+        if line.startswith("Station_ID") or line.strip() == "":
+            continue
+        parts = line.split()
+        if len(parts) >= 7:
+            station_id = parts[0]
+            station_name = " ".join(parts[1:-5])
+            report_time = parts[-5] + " " + parts[-4]
+            rainfall = parts[-3]
+            temperature = parts[-2]
+            rh = parts[-1]
+            records.append([station_id, station_name, report_time, rainfall, temperature, rh])
+
+    # Save to CSV
+    with open("rainfall_3hour.csv", "w", newline='', encoding="utf-8") as file:
+        writer = csv.writer(file)
+        writer.writerow(["Station_ID", "Station_Name", "Report_Time", "Rainfall (mm)", "Temperature (°C)", "RH (%)"])
+        writer.writerows(records)
+
+    print("✅ Rainfall data saved to rainfall_3hour.csv")
+
+finally:
+    driver.quit()
