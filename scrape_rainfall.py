@@ -5,8 +5,16 @@ from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from datetime import datetime
 import time
 import csv
+
+# Create a timestamp for the file name
+now = datetime.now()
+timestamp = now.strftime("%Y-%m-%d_%H-%M")
+
+txt_filename = f"rainfall_3hour_{timestamp}.txt"
+csv_filename = f"rainfall_3hour_{timestamp}.csv"
 
 options = Options()
 options.add_argument("--headless")
@@ -27,21 +35,20 @@ try:
     # Step 2: Click the "Load Data" button
     load_button = wait.until(EC.element_to_be_clickable((By.XPATH, "//button[text()='Load Data']")))
     load_button.click()
-    time.sleep(5)  # wait for data to load
+    time.sleep(5)
 
     # Step 3: Extract rainfall data
     rainfall_section = driver.find_element(By.ID, "tab-content")
     data = rainfall_section.text
 
-    # Save plain text (optional)
-    with open("rainfall_3hour.txt", "w", encoding="utf-8") as file:
+    # Save as .txt
+    with open(txt_filename, "w", encoding="utf-8") as file:
         file.write(data)
 
-    # Step 4: Convert text to CSV
+    # Convert to CSV
     lines = data.splitlines()
     records = []
 
-    # Skip header rows (usually first 1 or 2 lines)
     for line in lines:
         if line.startswith("Station_ID") or line.strip() == "":
             continue
@@ -55,13 +62,13 @@ try:
             rh = parts[-1]
             records.append([station_id, station_name, report_time, rainfall, temperature, rh])
 
-    # Save to CSV
-    with open("rainfall_3hour.csv", "w", newline='', encoding="utf-8") as file:
+    # Save as .csv
+    with open(csv_filename, "w", newline='', encoding="utf-8") as file:
         writer = csv.writer(file)
         writer.writerow(["Station_ID", "Station_Name", "Report_Time", "Rainfall (mm)", "Temperature (°C)", "RH (%)"])
         writer.writerows(records)
 
-    print("✅ Rainfall data saved to rainfall_3hour.csv")
+    print(f"✅ Data saved: {txt_filename} and {csv_filename}")
 
 finally:
     driver.quit()
