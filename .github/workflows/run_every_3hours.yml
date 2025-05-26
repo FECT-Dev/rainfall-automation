@@ -29,6 +29,5 @@ jobs:
         run: |
           git config --global user.name 'github-actions'
           git config --global user.email 'github-actions@github.com'
-          git add *.csv *.txt
-          git commit -m "Auto-update rainfall data with timestamp"
-          git push
+          git add *.csv *.txt || true
+          git diff --cached --quiet && echo "No changes to commit" || (git commit -m "Auto-update rainfall data with timestamp" && git push)
