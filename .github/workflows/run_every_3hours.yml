@@ -25,9 +25,9 @@ jobs:
       - name: Run scraper
         run: python scrape_rainfall.py
 
-      - name: Commit all new files
+      - name: Commit all new files in /data
         run: |
           git config --global user.name 'github-actions'
           git config --global user.email 'github-actions@github.com'
-          git add *.csv *.txt || true
+          git add data/
           git diff --cached --quiet && echo "No changes to commit" || (git commit -m "Auto-update rainfall data with timestamp" && git push)
