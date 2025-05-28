@@ -25,20 +25,24 @@ driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), opti
 
 try:
     driver.get("https://meteo.gov.lk/")
-    wait = WebDriverWait(driver, 15)
+    wait = WebDriverWait(driver, 20)
 
     # Step 1: Click the "3 Hourly Data" tab
     tab_button = wait.until(EC.element_to_be_clickable((By.XPATH, "//button[text()='3 Hourly Data']")))
     tab_button.click()
-    time.sleep(3)
+    time.sleep(5)  # Increase to allow the UI to respond
 
-    # Step 2: Wait for content to appear (skip the broken "Load Data" button)
+    # Step 2: Wait for tab content to appear
     wait.until(EC.presence_of_element_located((By.ID, "tab-content")))
-    time.sleep(5)
+    time.sleep(10)  # Allow JS-rendered data to load
 
     # Step 3: Extract rainfall data
     rainfall_section = driver.find_element(By.ID, "tab-content")
     data = rainfall_section.text
+
+    # Debug print
+    print("=== Scraped Rainfall Data ===")
+    print(data)
 
     # Save as .txt
     with open(txt_filename, "w", encoding="utf-8") as file:
