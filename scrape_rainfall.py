@@ -9,14 +9,16 @@ from datetime import datetime
 from bs4 import BeautifulSoup
 import time
 import csv
-import os  # ⬅️ Added to create a folder
+import os
 
 # Create the 'data' folder if it doesn't exist
 os.makedirs("data", exist_ok=True)
 
-# Timestamped file names
+# Use rounded hour instead of exact minute
 now = datetime.now()
-timestamp = now.strftime("%Y-%m-%d_%H-%M")
+rounded_hour = now.replace(minute=0, second=0, microsecond=0)
+timestamp = rounded_hour.strftime("%Y-%m-%d_%H-%M")
+
 txt_filename = f"data/rainfall_3hour_{timestamp}.txt"
 csv_filename = f"data/rainfall_3hour_{timestamp}.csv"
 
@@ -39,14 +41,15 @@ try:
 
     # Retry scraping the rainfall section
     data_loaded = False
-    retries = 5
+    retries = 10
     for _ in range(retries):
+        driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+        time.sleep(5)
         soup = BeautifulSoup(driver.page_source, "html.parser")
         tab_content = soup.find(id="tab-content")
         if tab_content and "Station_ID" in tab_content.text:
             data_loaded = True
             break
-        time.sleep(3)
 
     if not data_loaded:
         print("❌ Rainfall data not found after retrying.")
