@@ -9,12 +9,16 @@ from datetime import datetime
 from bs4 import BeautifulSoup
 import time
 import csv
+import os  # ⬅️ Added to create a folder
+
+# Create the 'data' folder if it doesn't exist
+os.makedirs("data", exist_ok=True)
 
 # Timestamped file names
 now = datetime.now()
 timestamp = now.strftime("%Y-%m-%d_%H-%M")
-txt_filename = f"rainfall_3hour_{timestamp}.txt"
-csv_filename = f"rainfall_3hour_{timestamp}.csv"
+txt_filename = f"data/rainfall_3hour_{timestamp}.txt"
+csv_filename = f"data/rainfall_3hour_{timestamp}.csv"
 
 # Headless browser options
 options = Options()
@@ -33,7 +37,7 @@ try:
     tab_button.click()
     time.sleep(5)
 
-    # Wait and check page source until we find rainfall data
+    # Retry scraping the rainfall section
     data_loaded = False
     retries = 5
     for _ in range(retries):
@@ -53,7 +57,7 @@ try:
     print("=== Scraped Rainfall Data ===")
     print(data.strip())
 
-    # Save .txt
+    # Save as .txt
     with open(txt_filename, "w", encoding="utf-8") as f:
         f.write(data)
 
@@ -74,7 +78,7 @@ try:
             rh = parts[-1]
             records.append([station_id, station_name, report_time, rainfall, temperature, rh])
 
-    # Save .csv
+    # Save as .csv
     with open(csv_filename, "w", newline='', encoding="utf-8") as f:
         writer = csv.writer(f)
         writer.writerow(["Station_ID", "Station_Name", "Report_Time", "Rainfall (mm)", "Temperature (°C)", "RH (%)"])
