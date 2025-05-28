@@ -6,6 +6,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from datetime import datetime
+from bs4 import BeautifulSoup
 import time
 import csv
 
@@ -32,7 +33,7 @@ try:
     tab_button.click()
     time.sleep(5)
 
-    # Step 2: Try to click "Load Data" button (more flexible XPath)
+    # Step 2: Try to click "Load Data" button (if present)
     try:
         load_button = wait.until(EC.element_to_be_clickable(
             (By.XPATH, "//div[@id='tab-content']//button[contains(text(), 'Load Data')]")
@@ -42,19 +43,25 @@ try:
     except Exception as e:
         print(f"⚠️ 'Load Data' button not found or not clickable: {e}")
 
-    # Step 3: Wait for actual data to load
+    # Step 3: Wait for data to load
     wait.until(EC.presence_of_element_located((By.ID, "tab-content")))
     time.sleep(10)
 
-    # Step 4: Extract data
-    rainfall_section = driver.find_element(By.ID, "tab-content")
-    data = rainfall_section.text
+    # Step 4: Extract data using BeautifulSoup
+    soup = BeautifulSoup(driver.page_source, "html.parser")
+    content_div = soup.find(id="tab-content")
+
+    if not content_div or "Station_ID" not in content_div.text:
+        print("⚠️ Rainfall data not loaded or incomplete.")
+        data = ""
+    else:
+        data = content_div.get_text()
 
     # Debug print
     print("=== Scraped Rainfall Data ===")
     print(data)
 
-    # Save as .txt
+    # Save raw text
     with open(txt_filename, "w", encoding="utf-8") as file:
         file.write(data)
 
@@ -75,7 +82,7 @@ try:
             rh = parts[-1]
             records.append([station_id, station_name, report_time, rainfall, temperature, rh])
 
-    # Save as .csv
+    # Save to CSV
     with open(csv_filename, "w", newline='', encoding="utf-8") as file:
         writer = csv.writer(file)
         writer.writerow(["Station_ID", "Station_Name", "Report_Time", "Rainfall (mm)", "Temperature (°C)", "RH (%)"])
