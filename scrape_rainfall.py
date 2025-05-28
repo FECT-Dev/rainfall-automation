@@ -26,38 +26,27 @@ driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), opti
 
 try:
     driver.get("https://meteo.gov.lk/")
-    wait = WebDriverWait(driver, 25)
+    wait = WebDriverWait(driver, 30)
 
     # Step 1: Click the "3 Hourly Data" tab
     tab_button = wait.until(EC.element_to_be_clickable((By.XPATH, "//button[contains(text(), '3 Hourly Data')]")))
     tab_button.click()
+    time.sleep(3)
+
+    # Step 2: Wait for actual station data (not Load button)
+    wait.until(lambda d: "Station_ID" in d.find_element(By.ID, "tab-content").text)
     time.sleep(5)
 
-    # Step 2: Try to click "Load Data" button (if present)
-    try:
-        load_button = wait.until(EC.element_to_be_clickable(
-            (By.XPATH, "//div[@id='tab-content']//button[contains(text(), 'Load Data')]")
-        ))
-        load_button.click()
-        print("✅ Clicked 'Load Data' button.")
-    except Exception as e:
-        print(f"⚠️ 'Load Data' button not found or not clickable: {e}")
-
-    # Step 3: Wait for data to load
-    wait.until(EC.presence_of_element_located((By.ID, "tab-content")))
-    time.sleep(10)
-
-    # Step 4: Extract data using BeautifulSoup
+    # Step 3: Scrape rainfall data using BeautifulSoup
     soup = BeautifulSoup(driver.page_source, "html.parser")
     content_div = soup.find(id="tab-content")
 
     if not content_div or "Station_ID" not in content_div.text:
-        print("⚠️ Rainfall data not loaded or incomplete.")
+        print("❌ Still no rainfall data found.")
         data = ""
     else:
         data = content_div.get_text()
 
-    # Debug print
     print("=== Scraped Rainfall Data ===")
     print(data)
 
