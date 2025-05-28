@@ -10,13 +10,13 @@ from bs4 import BeautifulSoup
 import time
 import csv
 
-# Create a timestamp for the file name
+# Timestamped file names
 now = datetime.now()
 timestamp = now.strftime("%Y-%m-%d_%H-%M")
-
 txt_filename = f"rainfall_3hour_{timestamp}.txt"
 csv_filename = f"rainfall_3hour_{timestamp}.csv"
 
+# Headless browser options
 options = Options()
 options.add_argument("--headless")
 options.add_argument("--no-sandbox")
@@ -28,31 +28,34 @@ try:
     driver.get("https://meteo.gov.lk/")
     wait = WebDriverWait(driver, 30)
 
-    # Step 1: Click the "3 Hourly Data" tab
+    # Click the "3 Hourly Data" tab
     tab_button = wait.until(EC.element_to_be_clickable((By.XPATH, "//button[contains(text(), '3 Hourly Data')]")))
     tab_button.click()
-    time.sleep(3)
-
-    # Step 2: Wait for actual station data (not Load button)
-    wait.until(lambda d: "Station_ID" in d.find_element(By.ID, "tab-content").text)
     time.sleep(5)
 
-    # Step 3: Scrape rainfall data using BeautifulSoup
-    soup = BeautifulSoup(driver.page_source, "html.parser")
-    content_div = soup.find(id="tab-content")
+    # Wait and check page source until we find rainfall data
+    data_loaded = False
+    retries = 5
+    for _ in range(retries):
+        soup = BeautifulSoup(driver.page_source, "html.parser")
+        tab_content = soup.find(id="tab-content")
+        if tab_content and "Station_ID" in tab_content.text:
+            data_loaded = True
+            break
+        time.sleep(3)
 
-    if not content_div or "Station_ID" not in content_div.text:
-        print("❌ Still no rainfall data found.")
+    if not data_loaded:
+        print("❌ Rainfall data not found after retrying.")
         data = ""
     else:
-        data = content_div.get_text()
+        data = tab_content.get_text()
 
     print("=== Scraped Rainfall Data ===")
-    print(data)
+    print(data.strip())
 
-    # Save raw text
-    with open(txt_filename, "w", encoding="utf-8") as file:
-        file.write(data)
+    # Save .txt
+    with open(txt_filename, "w", encoding="utf-8") as f:
+        f.write(data)
 
     # Convert to CSV
     lines = data.splitlines()
@@ -71,9 +74,9 @@ try:
             rh = parts[-1]
             records.append([station_id, station_name, report_time, rainfall, temperature, rh])
 
-    # Save to CSV
-    with open(csv_filename, "w", newline='', encoding="utf-8") as file:
-        writer = csv.writer(file)
+    # Save .csv
+    with open(csv_filename, "w", newline='', encoding="utf-8") as f:
+        writer = csv.writer(f)
         writer.writerow(["Station_ID", "Station_Name", "Report_Time", "Rainfall (mm)", "Temperature (°C)", "RH (%)"])
         writer.writerows(records)
 
