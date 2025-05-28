@@ -25,18 +25,26 @@ driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), opti
 
 try:
     driver.get("https://meteo.gov.lk/")
-    wait = WebDriverWait(driver, 20)
+    wait = WebDriverWait(driver, 25)
 
     # Step 1: Click the "3 Hourly Data" tab
     tab_button = wait.until(EC.element_to_be_clickable((By.XPATH, "//button[text()='3 Hourly Data']")))
     tab_button.click()
-    time.sleep(5)  # Increase to allow the UI to respond
+    time.sleep(5)
 
-    # Step 2: Wait for tab content to appear
+    # Step 2: Try to click "Load Data" button (if present)
+    try:
+        load_button = wait.until(EC.element_to_be_clickable((By.XPATH, "//button[text()='Load Data']")))
+        load_button.click()
+        print("✅ Clicked 'Load Data' button.")
+    except:
+        print("⚠️ 'Load Data' button not found. Proceeding anyway.")
+
+    # Step 3: Wait for actual data to load
     wait.until(EC.presence_of_element_located((By.ID, "tab-content")))
-    time.sleep(10)  # Allow JS-rendered data to load
+    time.sleep(10)
 
-    # Step 3: Extract rainfall data
+    # Step 4: Extract data
     rainfall_section = driver.find_element(By.ID, "tab-content")
     data = rainfall_section.text
 
