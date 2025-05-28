@@ -28,17 +28,19 @@ try:
     wait = WebDriverWait(driver, 25)
 
     # Step 1: Click the "3 Hourly Data" tab
-    tab_button = wait.until(EC.element_to_be_clickable((By.XPATH, "//button[text()='3 Hourly Data']")))
+    tab_button = wait.until(EC.element_to_be_clickable((By.XPATH, "//button[contains(text(), '3 Hourly Data')]")))
     tab_button.click()
     time.sleep(5)
 
-    # Step 2: Try to click "Load Data" button (if present)
+    # Step 2: Try to click "Load Data" button (more flexible XPath)
     try:
-        load_button = wait.until(EC.element_to_be_clickable((By.XPATH, "//button[text()='Load Data']")))
+        load_button = wait.until(EC.element_to_be_clickable(
+            (By.XPATH, "//div[@id='tab-content']//button[contains(text(), 'Load Data')]")
+        ))
         load_button.click()
         print("✅ Clicked 'Load Data' button.")
-    except:
-        print("⚠️ 'Load Data' button not found. Proceeding anyway.")
+    except Exception as e:
+        print(f"⚠️ 'Load Data' button not found or not clickable: {e}")
 
     # Step 3: Wait for actual data to load
     wait.until(EC.presence_of_element_located((By.ID, "tab-content")))
